@@ -9,6 +9,8 @@ declare global {
     interface Locals {
       pb: TypedPocketBase
       user: import("pocketbase").default["authStore"]["model"];
+      cmsPb: TypedPocketBase;
+      cmsUser: import("pocketbase").default["authStore"]["model"];
     }
     // interface PageData {}
     // interface PageState {}

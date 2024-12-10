@@ -71,6 +71,14 @@
 
     --ring: 24 5.7% 82.9%;
   }
+
+  html {
+    font-family: Satoshi, system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-background font-medium text-foreground;
+  }
 }
 
 @layer base {
@@ -79,5 +87,21 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  @font-face {
+    font-family: "Satoshi";
+    src: url("/fonts/satoshi/Satoshi-Variable.woff2") format("woff2");
+    font-weight: 300 900;
+    font-display: swap;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Satoshi";
+    src: url("/fonts/satoshi/Satoshi-VariableItalic.woff2") format("woff2");
+    font-weight: 300 900;
+    font-display: swap;
+    font-style: italic;
   }
 }

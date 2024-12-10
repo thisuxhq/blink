@@ -1,26 +1,46 @@
 version: "3.8"
 
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  pb_data:
+  pb_public:
+  pb_hooks:
+  pb_migrations:
+  node_modules:
+
 services:
   pocketbase:
-    image: ghcr.io/muchobien/pocketbase:0.22.27
     container_name: pocketbase
-    restart: unless-stopped
-    ports:
-      - "8090:8090"
-    volumes:
-      - ./pocketbase/pb_data:/pb_data
-      - ./pocketbase/pb_public:/pb_public
-      - ./pocketbase/pb_hooks:/pb_hooks
-    networks:
-      - app_network
-    environment:
-      - ORIGIN=http://localhost:3000 # Allow CORS requests from SvelteKit during development
-
-  sveltekit-app:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: sveltekit-app
+      dockerfile: pocketbase.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    volumes:
+      - pb_data:/pb/pb_data
+      - pb_public:/pb/pb_public
+      - pb_hooks:/pb/pb_hooks
+      - pb_migrations:/pb/pb_migrations
+    networks:
+      - app_network
+    healthcheck:
+      test:
+        ["CMD", "wget", "-q", "--spider", "http://localhost:8092/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - DISABLE_GZIP=true
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: app.Dockerfile
     ports:
       - "3000:3000"
     depends_on:
@@ -28,7 +48,7 @@ services:
     env_file:
       - .env
     environment:
-      - PUBLIC_POCKETBASE_URL=http://pocketbase:8090 # Use Docker network service name
+      - PUBLIC_POCKETBASE_URL=${PUBLIC_POCKETBASE_URL}
       - PUBLIC_APPLICATION_NAME=${PUBLIC_APPLICATION_NAME}
       - PUBLIC_APPLICATION_URL=${PUBLIC_APPLICATION_URL}
       - ENCRYPTION=${ENCRYPTION}
@@ -43,13 +63,9 @@ services:
       - STRIPE_ENTERPRISE_PRICE_ID=${STRIPE_ENTERPRISE_PRICE_ID}
       - PUBLIC_SITE_URL=${PUBLIC_SITE_URL}
       - STRIPE_PRODUCT_ID=${STRIPE_PRODUCT_ID}
-      - ORIGIN=http://localhost:3000
+
     networks:
       - app_network
     volumes:
       - .:/app
-      - /app/node_modules
-
-networks:
-  app_network:
-    driver: bridge
+      - node_modules:/app/node_modules
